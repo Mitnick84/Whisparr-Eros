@@ -6,6 +6,7 @@ import * as calendarViews from 'Calendar/calendarViews';
 import CalendarEvent from 'Calendar/Events/CalendarEvent';
 import useCalendar, { useCalendarTime } from 'Calendar/useCalendar';
 import { CalendarEvent as CalendarEventModel } from 'typings/Calendar';
+import translate from 'Utilities/String/translate';
 import styles from './CalendarDay.module.css';
 
 function sort(items: CalendarEventModel[]) {
@@ -74,6 +75,9 @@ function CalendarDay({ date, isTodaysDate }: CalendarDayProps) {
           {moment(date).date()}
         </div>
       )}
+      {!events.length && view === calendarViews.DAY ? (
+        <div className={styles.noEvents}>{translate('NoReleasesOnDay')}</div>
+      ) : null}
       <div>
         {events.map((event) => {
           return (
