@@ -122,7 +122,6 @@ namespace NzbDrone.Api.Test.Frontend.Mappers
 
             var staticMapper = new StaticResourceMapper(Mocker.GetMock<IAppFolderInfo>().Object,
                                                         Mocker.GetMock<IDiskProvider>().Object,
-                                                        Mocker.GetMock<IConfigFileProvider>().Object,
                                                         Mocker.GetMock<IViteDevServer>().Object,
                                                         LogManager.GetCurrentClassLogger());
 
@@ -190,7 +189,6 @@ namespace NzbDrone.Api.Test.Frontend.Mappers
         private IndexHtmlMapper GivenIndexMapper()
         {
             Mocker.GetMock<IAppFolderInfo>().SetupGet(s => s.StartUpFolder).Returns(Path.GetTempPath());
-            Mocker.GetMock<IConfigFileProvider>().SetupGet(s => s.UiFolder).Returns("UI");
             Mocker.GetMock<IConfigFileProvider>().SetupGet(s => s.UrlBase).Returns("/whisparr");
             Mocker.GetMock<IConfigFileProvider>().SetupGet(s => s.Theme).Returns("dark");
             Mocker.GetMock<ICacheBreakerProvider>()

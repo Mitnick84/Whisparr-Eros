@@ -2,32 +2,30 @@ using System.IO;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
-using NzbDrone.Core.Configuration;
+using NzbDrone.Common.Extensions;
 
 namespace Whisparr.Http.Frontend.Mappers
 {
     public class StaticResourceMapper : StaticResourceMapperBase
     {
         private readonly IAppFolderInfo _appFolderInfo;
-        private readonly IConfigFileProvider _configFileProvider;
         private readonly IViteDevServer _viteDevServer;
 
-        public StaticResourceMapper(IAppFolderInfo appFolderInfo, IDiskProvider diskProvider, IConfigFileProvider configFileProvider, IViteDevServer viteDevServer, Logger logger)
+        public StaticResourceMapper(IAppFolderInfo appFolderInfo, IDiskProvider diskProvider, IViteDevServer viteDevServer, Logger logger)
             : base(diskProvider, logger)
         {
             _appFolderInfo = appFolderInfo;
-            _configFileProvider = configFileProvider;
             _viteDevServer = viteDevServer;
         }
 
-        protected override string FolderPath => Path.Combine(_appFolderInfo.StartUpFolder, _configFileProvider.UiFolder);
+        protected override string FolderPath => _appFolderInfo.GetUiFolder();
 
         protected override string MapPath(string resourceUrl)
         {
             var path = resourceUrl.Replace('/', Path.DirectorySeparatorChar);
             path = path.Trim(Path.DirectorySeparatorChar);
 
-            return Path.Combine(_appFolderInfo.StartUpFolder, _configFileProvider.UiFolder, path);
+            return Path.Combine(_appFolderInfo.GetUiFolder(), path);
         }
 
         public override bool CanHandle(string resourceUrl)

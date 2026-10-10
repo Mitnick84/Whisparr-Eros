@@ -12,8 +12,8 @@
       "repo": "Sonarr/Sonarr",
       "branch": "v5-develop",
       "owns": "frontend",
-      "highWater": "a8a82905e7cebad06a8414d84124cd13899abb89",
-      "highWaterNote": "2026-09-24 'Hide home until we have something to show', the current tip of Sonarr v5-develop. Everything at or before this mark is settled. The second 2026-09 batch is 24 commits: the v5 UI redesign (12) and the four frontend tooling rewrites are deferred by paul's decision, and the backend eight are have/skip, plus one defer waiting on Radarr's restart work. Advance only when everything at or before the new mark is settled."
+      "highWater": "096f4e29f762f6ed0b0a2a873fa2f1b925a0c6f3",
+      "highWaterNote": "2026-10-09 'Fix validation for empty values in media management', the current tip of Sonarr v5-develop. Everything at or before this mark is settled. Sonarr 2026-10 is 57 commits, taken in two PRs: the first ports the frontend fixes, Interactive Search virtualization, Transmission labels and the parser date window, and the second the eight auth/security commits, including Forms authentication by default and login lockout by paul's decision. Advance only when everything at or before the new mark is settled."
     }
   },
   "dispositions": {
@@ -4730,6 +4730,54 @@
         "month": "2026-10",
         "disposition": "skip",
         "reason": "The V3 half only adds a SeasonPackUpgradeThreshold rule, a setting we do not have. The nullable-value validation fixes are all in Sonarr.Api.V5 settings, which we do not have."
+      },
+      "a83ffea24543bf45669f1656041bbd5f69735297": {
+        "subject": "Increase iterations to match OWASP recommendations",
+        "month": "2026-10",
+        "disposition": "pick",
+        "reason": "Same UserService here, at 10,000 PBKDF2-HMAC-SHA512 iterations. Raised to 220,000 with a rehash on the next successful login for passwords stored with fewer. Upstream has no test for it; a new UserServiceFixture covers the rehash, no rehash at the current count, and a wrong password. Verified on 6969 against a fresh data dir: the generated user signs in."
+      },
+      "0bdf2087a278670c750bf3630408b979d9ac062c": {
+        "subject": "New: Lockout after failed login attempts",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Applied to our AuthenticationService, which keeps its cached authentication method rather than reading config per request. Five failures from one address lock it out for five minutes, a success clears the count, and the login page disables the button and counts down. Usernames in the rewritten Auth log lines go through ForLog() (CodeQL flags rewritten log lines). Upstream shipped no tests; a new AuthenticationServiceFixture in Api.Test covers the threshold, refusal of the right password while locked, per-address scope and reset on success. Verified on 6969: the fifth failure redirects with lockoutUntil, the right password is refused while locked, and the page shows the countdown with the button disabled. Taken by paul's decision on 2026-10-10."
+      },
+      "9efa5a0698d33a1f4f58c84bd20f0c509711ac02": {
+        "subject": "Don't return passwords and secrets from settings API",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Same leak here: GET /api/v3/config/host returned the user's password hash, the SSL certificate password and the proxy password. Applied to our V3 HostConfigController and our CertificateValidator<T> (newer FluentValidation shape), with UserService.Upsert taking null to keep the stored password; the V5 GeneralSettingsController half has no counterpart. UserServiceFixture covers the Upsert cases. Verified on 6969: the host config returns ******** for the password, and saving the masked resource back keeps the original password working."
+      },
+      "b0bc052701c7da17fac978cc9ca6b31389ec9c49": {
+        "subject": "Path validation rejects relative path segments",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Taken with PathTraversalValidator rewritten for our FluentValidation version. Upstream moved its mappers from ConfigFileProvider.UiFolder ('../UI' in debug, which the new check rejects) to a normalized GetUiFolder(); we have UiFolder in more mappers than they do, so all seven here moved (Index, Login, Manifest, Favicon, Robots, BrowserConfig, StaticResource), unused IConfigFileProvider parameters dropped, and ViteDevMapperFixture updated. Upstream's PathExtension cases taken. The check runs inside CleanFilePath, so PathEquals and friends now throw on a '..' path; DiskProviderBase.GetMount resolves such a path first, keeping the mount lookup our Mono DiskProviderFixture pins (CI caught it in Mono.Test, which the local run had skipped). Verified on 6969: saving a backup folder of Backups/../escape returns 400 with the traversal message, and the debug publish still serves its UI."
+      },
+      "178b034505935065f81f941aa1509a9dfa1c8cdf": {
+        "subject": "Refresh browser after resetting API Key",
+        "month": "2026-10",
+        "disposition": "pick",
+        "reason": "Same frontend flow here: resetting the API key opened the restart-required modal, though the page only needed the new key it is served with. ApiKeyAuthenticationHandler now reads the key from config on each request, and the settings page reloads itself after a reset. Uses our existing BrowserReloadRequired key; the upstream en.json hunk was not taken."
+      },
+      "14771abc54ab66859568b1b34ca43cb4849dff24": {
+        "subject": "New: Enable Forms authentication by default",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Taken by paul's decision on 2026-10-10. New installs, and config files still set to None, use Forms; on startup with no user InitialUserService creates 'whisparr' (WHISPARR__AUTH__INITIALUSERNAME/INITIALPASSWORD override it) and logs a generated password once. The login page gains a reset flow that writes a single-use token to the Auth log, with WHISPARR__AUTH__RESETTOKEN as a fallback and a health check while it is set. Adapted: the config-file credential migration reads through ConfigFileProvider.LoadConfigFile as ours did, the reset path checks our cached method since EffectiveAuthenticationMethod came with the deferred OIDC work, the reset panels use our login.html theme variables, and the two health check strings are our own keys. Upstream's InitialUserService, SecretGenerator, ConfigFileProvider and AuthenticationService tests ported (the last into Api.Test). Verified on 6969 against a fresh data dir: Forms and Required=Enabled by default, the generated user signs in, request/throttle/mismatch/reset/reuse all redirect as expected, the old password stops working, and a restart creates no second user."
+      },
+      "93b5da55b33339546b445e9c6beedb043db1d7b7": {
+        "subject": "Clean up permissions on Windows",
+        "month": "2026-10",
+        "disposition": "pick",
+        "reason": "Same AppFolderFactory here, granting Everyone Modify on the AppData folder on every Windows startup. Now the install-service and register-url modes grant the current user (plus LocalService when the service exists) and only then remove the Everyone rule. Builds for the Windows platform; not run, since nothing here can exercise Windows ACLs. Taken by paul's decision on 2026-10-10."
+      },
+      "c340e50b7fd02dc1a6bef8c20b39298c445d0034": {
+        "subject": "Use constant time comparison for API key and password hashes",
+        "month": "2026-10",
+        "disposition": "pick",
+        "reason": "Applied cleanly on top of 178b03450: FixedTimeEquals for the API key and both password hash comparisons."
       }
     }
   }
