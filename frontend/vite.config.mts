@@ -1,6 +1,6 @@
 import { ChildProcess, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, readdirSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, Plugin } from 'vite';
@@ -76,6 +76,63 @@ function copyStaticContent(): Plugin {
 
 // Keeps the generated *.module.css.d.ts files current while the dev server
 // runs. `yarn typecheck` generates them once for CI.
+// While `yarn start` runs, keep the backend's copies of the localization files
+// in step with the source, so a debug build serves new keys without a rebuild.
+function copyLocalization(): Plugin {
+  const localizationDir = path.join(
+    repoRoot,
+    'src/NzbDrone.Core/Localization/Core'
+  );
+
+  // Every build and publish keeps its own copy, at whatever depth its layout
+  // puts it: _output/net10.0, _output/net10.0/osx-arm64,
+  // _output/net10.0/osx-arm64/publish and so on.
+  function targetDirs() {
+    const output = path.join(repoRoot, '_output');
+
+    if (!existsSync(output)) {
+      return [];
+    }
+
+    return readdirSync(output, { recursive: true, withFileTypes: true })
+      .filter(
+        (entry) =>
+          entry.isDirectory() &&
+          entry.name === 'Core' &&
+          path.basename(entry.parentPath) === 'Localization'
+      )
+      .map((entry) => path.join(entry.parentPath, entry.name));
+  }
+
+  function copy(file: string) {
+    for (const dir of targetDirs()) {
+      cpSync(file, path.join(dir, path.basename(file)));
+    }
+  }
+
+  function owns(file: string) {
+    return path.dirname(file) === localizationDir && file.endsWith('.json');
+  }
+
+  return {
+    name: 'copy-localization',
+    apply: 'serve',
+
+    configureServer(server) {
+      for (const file of readdirSync(localizationDir)) {
+        if (file.endsWith('.json')) {
+          copy(path.join(localizationDir, file));
+        }
+      }
+
+      server.watcher.add(localizationDir);
+
+      server.watcher.on('add', (file) => owns(file) && copy(file));
+      server.watcher.on('change', (file) => owns(file) && copy(file));
+    },
+  };
+}
+
 function cssModuleTypes(): Plugin {
   let child: ChildProcess | undefined;
 
@@ -174,6 +231,7 @@ export default defineConfig({
     patchCssModules({ exportMode: 'default' }),
     react(),
     copyStaticContent(),
+    copyLocalization(),
     cssModuleTypes(),
     openThroughApp(),
   ],
