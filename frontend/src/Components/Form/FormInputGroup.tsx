@@ -234,7 +234,7 @@ function FormInputGroup<T, C extends InputType>(
           {unit && (
             <div
               className={
-                type === inputTypes.NUMBER
+                type === inputTypes.NUMBER || type === inputTypes.FLOAT
                   ? styles.inputUnitNumber
                   : styles.inputUnit
               }
