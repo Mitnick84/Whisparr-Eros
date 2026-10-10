@@ -61,7 +61,7 @@ namespace NzbDrone.Core.Download.Clients.Transmission
                             continue;
                         }
                     }
-                    else if (!outputPath.FullPath.Split('\\', '/').Contains(Settings.MovieCategory))
+                    else if (!outputPath.FullPath.Split(new[] { '\\', '/' }).Contains(Settings.MovieCategory))
                     {
                         continue;
                     }

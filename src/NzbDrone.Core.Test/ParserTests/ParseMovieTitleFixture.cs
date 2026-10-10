@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Test.Framework;
@@ -114,7 +115,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase(14)]
         public void should_parse_release_date_up_to_two_weeks_ahead(int daysAhead)
         {
-            var releaseDate = DateTime.Now.AddDays(daysAhead).ToString("yyyy-MM-dd");
+            var releaseDate = DateTime.Now.AddDays(daysAhead).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             Parser.Parser.ParseMovieTitle($"[Vixen] Performer Name - Some Title ({releaseDate}) [2160p]").ReleaseDate.Should().Be(releaseDate);
         }
@@ -123,7 +124,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase(60)]
         public void should_not_parse_release_date_more_than_two_weeks_ahead(int daysAhead)
         {
-            var releaseDate = DateTime.Now.AddDays(daysAhead).ToString("yyyy-MM-dd");
+            var releaseDate = DateTime.Now.AddDays(daysAhead).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             Parser.Parser.ParseMovieTitle($"[Vixen] Performer Name - Some Title ({releaseDate}) [2160p]")?.ReleaseDate.Should().NotBe(releaseDate);
         }
