@@ -94,7 +94,12 @@ function cssModuleTypes(): Plugin {
       child = spawn(
         path.join(repoRoot, 'node_modules', '.bin', bin),
         ['frontend/src', '--pattern', '**/*.module.css', '--watch'],
-        { cwd: repoRoot, stdio: 'inherit' }
+        {
+          cwd: repoRoot,
+          stdio: 'inherit',
+          // Node won't spawn a .cmd without a shell on Windows.
+          shell: process.platform === 'win32',
+        }
       );
 
       server.httpServer?.on('close', stop);
