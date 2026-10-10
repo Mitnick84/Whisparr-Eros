@@ -67,6 +67,29 @@ namespace NzbDrone.Core.Test.Authentication
         }
 
         [Test]
+        public void should_keep_the_stored_password_when_upserting_without_one()
+        {
+            var oldHash = _user.Password;
+
+            Mocker.GetMock<IUserRepository>()
+                  .Setup(s => s.SingleOrDefault())
+                  .Returns(_user);
+
+            var user = Subject.Upsert("Renamed", null);
+
+            user.Username.Should().Be("renamed");
+            user.Password.Should().Be(oldHash);
+        }
+
+        [Test]
+        public void should_not_add_a_user_without_a_password()
+        {
+            Subject.Upsert("user", null).Should().BeNull();
+
+            Mocker.GetMock<IUserRepository>().Verify(v => v.Insert(It.IsAny<User>()), Times.Never());
+        }
+
+        [Test]
         public void should_not_find_user_with_wrong_password()
         {
             Subject.FindUser("user", "wrong").Should().BeNull();
