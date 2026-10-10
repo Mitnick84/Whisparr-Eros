@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Claims;
@@ -42,6 +43,15 @@ namespace Whisparr.Http.Authentication
 
             if (user == null)
             {
+                var lockoutEndTime = _authService.GetLockoutEndTime(HttpContext.Request);
+
+                if (lockoutEndTime.HasValue)
+                {
+                    var lockoutUntil = new DateTimeOffset(lockoutEndTime.Value, TimeSpan.Zero).ToUnixTimeMilliseconds();
+
+                    return Redirect($"~/login?returnUrl={returnUrl}&loginFailed=true&lockoutUntil={lockoutUntil}");
+                }
+
                 return Redirect($"~/login?returnUrl={returnUrl}&loginFailed=true");
             }
 
