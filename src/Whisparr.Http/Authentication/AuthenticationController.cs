@@ -98,6 +98,39 @@ namespace Whisparr.Http.Authentication
             return Redirect(_configFileProvider.UrlBase + returnUrl);
         }
 
+        [HttpPost("reset-password/request")]
+        [ProducesResponseType(StatusCodes.Status302Found)]
+        public IActionResult RequestPasswordReset()
+        {
+            var token = _authService.RequestPasswordReset(HttpContext.Request);
+
+            if (token == null)
+            {
+                return Redirect("~/login?resetPassword=true&tokenSent=true&tokenUnavailable=true");
+            }
+
+            return Redirect("~/login?resetPassword=true&tokenSent=true");
+        }
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status302Found)]
+        public IActionResult ResetPassword([FromForm] ResetPasswordResource resource)
+        {
+            if (resource.Username.IsNullOrWhiteSpace() ||
+                resource.Password.IsNullOrWhiteSpace() ||
+                resource.Password != resource.PasswordConfirmation)
+            {
+                return Redirect("~/login?resetPassword=true&tokenSent=true&resetInvalid=true");
+            }
+
+            if (!_authService.ResetPassword(HttpContext.Request, resource.Token, resource.Username, resource.Password))
+            {
+                return Redirect("~/login?resetPassword=true&tokenSent=true&resetFailed=true");
+            }
+
+            return Redirect("~/login?passwordReset=true");
+        }
+
         [HttpGet("logout")]
         [ProducesResponseType(StatusCodes.Status302Found)]
         public async Task<IActionResult> Logout()
