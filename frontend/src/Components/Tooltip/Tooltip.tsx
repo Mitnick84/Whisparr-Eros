@@ -9,6 +9,7 @@ import {
   Placement,
   safePolygon,
   shift,
+  size,
   useClick,
   useDismiss,
   useFloating,
@@ -25,6 +26,8 @@ import { Kind } from 'Helpers/Props/kinds';
 import { isMobile } from 'Utilities/browser';
 import styles from './Tooltip.module.css';
 
+const VIEWPORT_PADDING = 10;
+
 export interface TooltipProps {
   accessibleLabel?: string;
   className?: string;
@@ -38,7 +41,7 @@ export interface TooltipProps {
   canFlip?: boolean;
 }
 
-function Tooltip(props: TooltipProps) {
+function Tooltip(props: Readonly<TooltipProps>) {
   const {
     accessibleLabel,
     className,
@@ -63,15 +66,27 @@ function Tooltip(props: TooltipProps) {
 
   const { refs, context, floatingStyles } = useFloating({
     middleware: [
+      offset({ mainAxis: 10 }),
+      flip({
+        crossAxis: canFlip ? 'alignment' : false,
+        mainAxis: canFlip,
+        fallbackAxisSideDirection: 'start',
+      }),
+      shift({ padding: VIEWPORT_PADDING }),
+      // Cap the tooltip to the space left in the viewport, so a long one
+      // scrolls inside itself instead of running off a phone screen.
+      size({
+        padding: VIEWPORT_PADDING,
+        apply({ availableWidth, availableHeight, elements }) {
+          Object.assign(elements.floating.style, {
+            maxWidth: `${Math.max(0, availableWidth)}px`,
+            maxHeight: `${Math.max(0, availableHeight)}px`,
+          });
+        },
+      }),
       arrow({
         element: arrowRef,
       }),
-      flip({
-        crossAxis: canFlip,
-        mainAxis: canFlip,
-      }),
-      offset({ mainAxis: 10 }),
-      shift(),
     ],
     open: isOpen,
     placement: position,
