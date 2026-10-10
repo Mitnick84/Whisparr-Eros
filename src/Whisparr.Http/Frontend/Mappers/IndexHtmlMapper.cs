@@ -3,6 +3,7 @@ using System.IO;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Configuration;
 
 namespace Whisparr.Http.Frontend.Mappers
@@ -24,7 +25,7 @@ namespace Whisparr.Http.Frontend.Mappers
             _configFileProvider = configFileProvider;
             _viteDevServer = viteDevServer;
 
-            _folderPath = Path.Combine(appFolderInfo.StartUpFolder, configFileProvider.UiFolder);
+            _folderPath = appFolderInfo.GetUiFolder();
 
             HtmlPath = Path.Combine(_folderPath, "index.html");
             UrlBase = configFileProvider.UrlBase;

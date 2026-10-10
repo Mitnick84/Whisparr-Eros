@@ -538,6 +538,12 @@ namespace NzbDrone.Common.Disk
         {
             try
             {
+                // Path validation rejects '.' and '..' segments, so resolve them before comparing against mounts.
+                if (path.ContainsPathTraversal())
+                {
+                    path = Path.GetFullPath(path);
+                }
+
                 // IsParentPath walks the path back up to the root, and that walk is identical for every mount, so
                 // do it once here rather than once per mount. MountCheck performs a lookup per movie path, so on a
                 // large library this comparison runs hundreds of thousands of times.
