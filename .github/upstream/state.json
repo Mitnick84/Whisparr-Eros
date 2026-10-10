@@ -12,8 +12,8 @@
       "repo": "Sonarr/Sonarr",
       "branch": "v5-develop",
       "owns": "frontend",
-      "highWater": "096f4e29f762f6ed0b0a2a873fa2f1b925a0c6f3",
-      "highWaterNote": "2026-10-09 'Fix validation for empty values in media management', the current tip of Sonarr v5-develop. Everything at or before this mark is settled. Sonarr 2026-10 is 57 commits, taken in two PRs: the first ports the frontend fixes, Interactive Search virtualization, Transmission labels and the parser date window, and the second the eight auth/security commits, including Forms authentication by default and login lockout by paul's decision. Advance only when everything at or before the new mark is settled."
+      "highWater": "4831dfe91cdceaeba3d441abb3d348c4c53b605a",
+      "highWaterNote": "2026-10-10 'Make Calendar grid navigable with screen readers', the current tip of Sonarr v5-develop. Everything at or before this mark is settled. Sonarr 2026-10 is 72 commits over three PRs: #963 (frontend fixes, Interactive Search virtualization, Transmission labels, the parser date window), #965 (the auth batch, including Forms by default and login lockout by paul's decision), and a third for the 15 pushed on 2026-10-10. Advance only when everything at or before the new mark is settled."
     }
   },
   "dispositions": {
@@ -4778,6 +4778,101 @@
         "month": "2026-10",
         "disposition": "pick",
         "reason": "Applied cleanly on top of 178b03450: FixedTimeEquals for the API key and both password hash comparisons."
+      },
+      "b0bde26f81cfc7937a0f1a6eb21d145ab989221a": {
+        "subject": "Resolve episodes accross multi-season packs",
+        "month": "2026-10",
+        "disposition": "skip",
+        "reason": "Parser gate and no counterpart model. Resolves episodes across multi-season packs: Parser.cs season-range patterns, ParsedEpisodeInfo season fields, SeasonMatch and SingleEpisodeSearchMatch specifications and episode lookup in ParsingService. We have no seasons or episodes, and our parser carries none of these patterns."
+      },
+      "4ebfc48477322cab439634da2c91adbbcf9f1815": {
+        "subject": "Clear all expired cache entries periodically",
+        "month": "2026-10",
+        "disposition": "pick",
+        "reason": "Applied cleanly. Expired cache entries stayed in memory until read again or swept by their owner; ICacheManager.ClearExpired now sweeps every cache, run by a new scheduled task every five minutes, and CachedDictionary no longer throws when swept without a TTL. Upstream's Common and Core tests taken."
+      },
+      "0932ff5ba7238ada9f521569eb18c148412f6daa": {
+        "subject": "Hours instead of days for Air Date Grace Period",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Only the frontend guard applies: getValidationFailures assumed any 400 body was an array of failures, so a 400 carrying a message object threw in reduce. The rest moves the release-profile air date grace period from days to hours, and we have no AirDateSpecification or grace period setting."
+      },
+      "be26be8ae0c6fae98407067f39ece1203820331e": {
+        "subject": "New: Option to remove tags from series removed from import list",
+        "month": "2026-10",
+        "disposition": "defer",
+        "reason": "Adds a per-import-list option to remove tags from series that drop off the list, with migration 236 and a TagExistingType enum, reworking ImportListSyncService. It would apply to our movie import lists, but it is a new list feature with its own migration, not a sync fix.",
+        "blockedBy": "A product decision on whether Eros import lists gain the tag-removal option, which needs its own migration number in our sequence."
+      },
+      "a6ed62f133e76eb7e07c3ee0fb06276f4e26c0e1": {
+        "subject": "Don't cache translations during development",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Same cached localization here. A debug build now reads en.json fresh, and a copy-localization plugin in our frontend/vite.config.mts copies the localization files into every Localization/Core folder under _output while yarn start runs. Upstream only looks one level down, which misses our RID and publish layouts (_output/net10.0/osx-arm64/publish), so ours walks _output. Verified with the osx-arm64 debug publish on 6969: adding a key to src en.json while yarn start ran had /api/v3/localization serve it within 3 seconds, with no restart and no dotnet build, and removing it took it away again."
+      },
+      "155f3fd0f79137628d2794678f32b4fcf2a34279": {
+        "subject": "Fix loading indicator with Reduced Motion enabled",
+        "month": "2026-10",
+        "disposition": "defer",
+        "reason": "Fixes a loading indicator frozen by a global prefers-reduced-motion rule in Sonarr's scaffolding.css. That rule came with d9e7ea050 (v5 UI Foundation); our stylesheets have no reduced-motion override, so our ripple still animates and there is nothing to fix until the redesign lands.",
+        "blockedBy": "A product decision on whether Eros adopts Sonarr's v5 UI redesign. Deferred by paul on 2026-09-27. If it is adopted, this follow-up comes with it, after d9e7ea050 (UI Foundation)."
+      },
+      "4f63215b3d453dd2caa3b1348a6fcb90aa987fb7": {
+        "subject": "Fixed: Sorting Interactive Search results by language",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Same predicate in our port of useReleases: languages sorted by internal id, which follows no visible order. Now by name, multi-language releases as our existing MultiLanguage label, unknown last."
+      },
+      "843c5e8120e2b4fb93c61ccdcca97abbcab06e47": {
+        "subject": "Update frontend dependencies",
+        "month": "2026-10",
+        "disposition": "skip",
+        "reason": "A frontend dependency bump against Sonarr's package.json (React 18, typescript-eslint 8.71, stylelint 15.11), plus lint-driven tweaks to stylesheets for pages we have restyled or do not have. Our dependencies are on different versions (React 19) and Dependabot owns them."
+      },
+      "01d1d9c516d492362e9d29600f77819e224f4ebd": {
+        "subject": "Center search suggestions dropdown",
+        "month": "2026-10",
+        "disposition": "defer",
+        "reason": "Centres the series search .dropdown, a class introduced by 7004c3df7 (Series search results styling), itself deferred as a redesign follow-up. Our MovieSearchInput has no .dropdown.",
+        "blockedBy": "A product decision on whether Eros adopts Sonarr's v5 UI redesign. Deferred by paul on 2026-09-27. If it is adopted, this follow-up comes with it, after d9e7ea050 (UI Foundation)."
+      },
+      "eb55c5d44ec5bd71aa9c146399c55148a78eb679": {
+        "subject": "Page message and input for files improvements",
+        "month": "2026-10",
+        "disposition": "defer",
+        "reason": "Mostly redesign follow-up: PageMessage came with 4fb11bf98 (v5 Activity and Wanted) and does not exist here, and the file-input and About spacing tweak redesign styles. The backup upload path fix is already ours (useBackups posts through useApiMutation, not a hard-coded v5 URL), and the /system/backup to /system/backups rename would only move a URL people may have bookmarked.",
+        "blockedBy": "A product decision on whether Eros adopts Sonarr's v5 UI redesign. Deferred by paul on 2026-09-27. If it is adopted, this follow-up comes with it, after d9e7ea050 (UI Foundation)."
+      },
+      "f2cf7193a9455b6bffa4ecd9f209b610933fd500": {
+        "subject": "Improve alert readability with Color-impaired mode",
+        "month": "2026-10",
+        "disposition": "defer",
+        "reason": "Removes the colour-impaired theme's alert colour overrides from themes.css, which came with d9e7ea050 (v5 UI Foundation). Our themes are the TypeScript light/dark objects and have no colour-impaired variant.",
+        "blockedBy": "A product decision on whether Eros adopts Sonarr's v5 UI redesign. Deferred by paul on 2026-09-27. If it is adopted, this follow-up comes with it, after d9e7ea050 (UI Foundation)."
+      },
+      "ecbbc2cdcb4ae6c4dc0242200022baf8098f31d7": {
+        "subject": "Reduce payload size when saving series",
+        "month": "2026-10",
+        "disposition": "skip",
+        "reason": "Strips seasons statistics, seasonTypes, translations and images from the series save payload. Most of those fields came with the series translations work (b4e9ab179), skipped here, and the rest are Series-shaped; our movie monitored toggle already PATCHes rather than resending the movie."
+      },
+      "afbb3e42617714da5223b11937a6d5fa7bce1295": {
+        "subject": "Multiple Translations updated by Weblate",
+        "month": "2026-10",
+        "disposition": "skip",
+        "reason": "Weblate gate. Touches Localization/Core/*.json only. Our translations come from Weblate, never from cherry-picks."
+      },
+      "9215ed61d4b8468be8944b194744e7bc10e82d53": {
+        "subject": "Automated API Docs update",
+        "month": "2026-10",
+        "disposition": "skip",
+        "reason": "Regenerated openapi.json for the V5 surface only. We retired the checked-in spec and serve ours at /docs, and we have no Api.V5 project anyway."
+      },
+      "4831dfe91cdceaeba3d441abb3d348c4c53b605a": {
+        "subject": "Make Calendar grid navigable with screen readers",
+        "month": "2026-10",
+        "disposition": "adapt",
+        "reason": "Our calendar matches upstream's pre-image closely (it was ported from Sonarr), so the grid becomes a table with a visually hidden header row and each day carrying its full date and aria-current for today; the visible day-of-week strip is aria-hidden. Adapted: our 70px minimum row height rather than upstream's 110/140px, @mixin rather than @add-mixin (our stylelint only allows the former), and a new visuallyHidden mixin that StatusIndicator now uses. Verified on 6969 in month, week, forecast and day views: columns line up with the day-of-week strip, the table is labelled Calendar, today is announced, rows still grow with their events, and no console errors."
       }
     }
   }
