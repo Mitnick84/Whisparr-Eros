@@ -42,7 +42,7 @@ function DaysOfWeek() {
   }
 
   return (
-    <div className={styles.daysOfWeek}>
+    <div className={styles.daysOfWeek} aria-hidden={true}>
       {dates.map((date) => {
         return (
           <DayOfWeek
