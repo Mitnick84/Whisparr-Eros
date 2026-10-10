@@ -1,9 +1,9 @@
 .day {
-  flex: 1 0 14.28%;
   overflow: hidden;
-  min-height: 70px;
+  padding: 0;
   border-bottom: 1px solid var(--calendarBorderColor);
   border-left: 1px solid var(--calendarBorderColor);
+  vertical-align: top;
 }
 
 .isSingleDay {
@@ -29,4 +29,8 @@
 
 .isDifferentMonth {
   color: var(--disabledColor);
+}
+
+.fullDate {
+  @mixin visuallyHidden;
 }
