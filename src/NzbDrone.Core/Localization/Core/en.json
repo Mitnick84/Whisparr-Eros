@@ -1443,6 +1443,7 @@
   "NoMoviesExist": "No movies found, to get started you'll want to add a new movie or import some existing ones.",
   "None": "None",
   "NoPerformersExist": "No Performers Exist",
+  "NoReleasesOnDay": "Nothing is releasing on this day",
   "NoResultsFound": "No results found",
   "NoScenesExist": "No scenes found, to get started you'll want to add a new scene or import some existing ones.",
   "NoStashDBStudioLink": "Studio not linked in StashDB",
