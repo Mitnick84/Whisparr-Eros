@@ -95,6 +95,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
             var items = movieFiles.Select(movieFile => MapItem(movieFile, movie, directoryInfo.Name)).ToList();
 
+            if (!_diskProvider.FolderExists(movie.Path))
+            {
+                return items;
+            }
+
             var mediaFiles = _diskScanService.FilterPaths(movie.Path, _diskScanService.GetVideoFiles(movie.Path)).ToList();
             var unmappedFiles = MediaFileService.FilterExistingFiles(mediaFiles, movieFiles, movie);
 
