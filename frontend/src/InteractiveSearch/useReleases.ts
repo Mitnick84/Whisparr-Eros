@@ -28,12 +28,20 @@ const SORT_PREDICATES = {
     return seeders * 1000000 + leechers;
   },
 
+  // By name, with multi-language releases sorted as their label and unknown
+  // last; ids follow no meaningful order.
   languages: (item: Release) => {
     if (item.languages.length > 1) {
-      return 10000;
+      return translate('MultiLanguage');
     }
 
-    return item.languages[0]?.id ?? 0;
+    const language = item.languages[0];
+
+    if (!language || language.id === 0) {
+      return '\uffff';
+    }
+
+    return language.name;
   },
 
   indexerFlags: (item: Release) =>
