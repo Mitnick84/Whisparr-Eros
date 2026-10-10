@@ -20,6 +20,8 @@ namespace NzbDrone.Core.Download.Clients.Transmission
 {
     public abstract class TransmissionBase : TorrentClientBase<TransmissionSettings>
     {
+        private static readonly char[] PathSeparators = { '\\', '/' };
+
         public abstract bool SupportsLabels { get; }
 
         protected readonly ITransmissionProxy _proxy;
@@ -61,7 +63,7 @@ namespace NzbDrone.Core.Download.Clients.Transmission
                             continue;
                         }
                     }
-                    else if (!outputPath.FullPath.Split(new[] { '\\', '/' }).Contains(Settings.MovieCategory))
+                    else if (!outputPath.FullPath.Split(PathSeparators).Contains(Settings.MovieCategory))
                     {
                         continue;
                     }
