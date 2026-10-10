@@ -19,7 +19,7 @@ namespace NzbDrone.Core.Notifications.Plex.Server
     public interface IPlexServerService
     {
         void UpdateLibrary(Movie movie, PlexServerSettings settings);
-        void UpdateLibrary(IEnumerable<Movie> movie, PlexServerSettings settings);
+        void UpdateLibrary(IEnumerable<Movie> movies, PlexServerSettings settings);
         ValidationFailure Test(PlexServerSettings settings);
     }
 
@@ -45,7 +45,7 @@ namespace NzbDrone.Core.Notifications.Plex.Server
             UpdateLibrary(new[] { movie }, settings);
         }
 
-        public void UpdateLibrary(IEnumerable<Movie> multipleMovies, PlexServerSettings settings)
+        public void UpdateLibrary(IEnumerable<Movie> movies, PlexServerSettings settings)
         {
             try
             {
@@ -57,7 +57,7 @@ namespace NzbDrone.Core.Notifications.Plex.Server
 
                 var sections = GetSections(settings);
 
-                foreach (var movie in multipleMovies)
+                foreach (var movie in movies)
                 {
                     UpdateSections(movie, sections, settings);
                 }
@@ -71,19 +71,53 @@ namespace NzbDrone.Core.Notifications.Plex.Server
             }
         }
 
-        private List<PlexSection> GetSections(PlexServerSettings settings)
+        public ValidationFailure Test(PlexServerSettings settings)
         {
-            _logger.Debug("Getting sections from Plex host: {0}", settings.Host);
+            try
+            {
+                _versionCache.Remove(settings.Host);
+                var sections = GetSections(settings);
 
-            return _plexServerProxy.GetMovieSections(settings).ToList();
+                if (sections.Empty())
+                {
+                    return new ValidationFailure("Host", _localizationService.GetLocalizedString("NotificationsPlexValidationNoMovieLibraryFound"));
+                }
+            }
+            catch (PlexAuthenticationException ex)
+            {
+                _logger.Error(ex, "Unable to connect to Plex Media Server");
+                return new ValidationFailure("AuthToken", _localizationService.GetLocalizedString("NotificationsValidationInvalidAuthenticationToken"));
+            }
+            catch (PlexException ex)
+            {
+                return new NzbDroneValidationFailure("Host", _localizationService.GetLocalizedString("NotificationsValidationUnableToConnect", new Dictionary<string, object> { { "exceptionMessage", ex.Message } }));
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Unable to connect to Plex Media Server");
+
+                return new NzbDroneValidationFailure("Host", _localizationService.GetLocalizedString("NotificationsValidationUnableToConnectToService", new Dictionary<string, object> { { "serviceName", "Plex Media Server" } }))
+                {
+                    DetailedDescription = ex.Message
+                };
+            }
+
+            return null;
         }
 
-        private void ValidateVersion(Version version)
+        private static void ValidateVersion(Version version)
         {
             if (version >= new Version(1, 3, 0) && version < new Version(1, 3, 1))
             {
                 throw new PlexVersionException("Found version {0}, upgrade to PMS 1.3.1 to fix library updating and then restart Whisparr", version);
             }
+        }
+
+        private List<PlexSection> GetSections(PlexServerSettings settings)
+        {
+            _logger.Debug("Getting sections from Plex host: {0}", settings.Host);
+
+            return _plexServerProxy.GetMovieSections(settings).ToList();
         }
 
         private Version GetVersion(PlexServerSettings settings)
@@ -156,40 +190,6 @@ namespace NzbDrone.Core.Notifications.Plex.Server
 
             _logger.Debug("Updating section location, {0}", location.Path);
             _plexServerProxy.Update(section.Id, pathToUpdate, settings);
-        }
-
-        public ValidationFailure Test(PlexServerSettings settings)
-        {
-            try
-            {
-                _versionCache.Remove(settings.Host);
-                var sections = GetSections(settings);
-
-                if (sections.Empty())
-                {
-                    return new ValidationFailure("Host", _localizationService.GetLocalizedString("NotificationsPlexValidationNoMovieLibraryFound"));
-                }
-            }
-            catch (PlexAuthenticationException ex)
-            {
-                _logger.Error(ex, "Unable to connect to Plex Media Server");
-                return new ValidationFailure("AuthToken", _localizationService.GetLocalizedString("NotificationsValidationInvalidAuthenticationToken"));
-            }
-            catch (PlexException ex)
-            {
-                return new NzbDroneValidationFailure("Host", _localizationService.GetLocalizedString("NotificationsValidationUnableToConnect", new Dictionary<string, object> { { "exceptionMessage", ex.Message } }));
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Unable to connect to Plex Media Server");
-
-                return new NzbDroneValidationFailure("Host", _localizationService.GetLocalizedString("NotificationsValidationUnableToConnectToService", new Dictionary<string, object> { { "serviceName", "Plex Media Server" } }))
-                       {
-                           DetailedDescription = ex.Message
-                       };
-            }
-
-            return null;
         }
     }
 }

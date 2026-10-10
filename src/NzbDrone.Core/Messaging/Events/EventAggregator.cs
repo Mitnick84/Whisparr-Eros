@@ -17,27 +17,6 @@ namespace NzbDrone.Core.Messaging.Events
         private readonly TaskFactory _taskFactory;
         private readonly Dictionary<string, object> _eventSubscribers;
 
-        private class EventSubscribers<TEvent>
-            where TEvent : class, IEvent
-        {
-            public IHandle<TEvent>[] _syncHandlers;
-            public IHandleAsync<TEvent>[] _asyncHandlers;
-            public IHandleAsync<IEvent>[] _globalHandlers;
-
-            public EventSubscribers(IServiceFactory serviceFactory)
-            {
-                _syncHandlers = serviceFactory.BuildAll<IHandle<TEvent>>()
-                                              .OrderBy(GetEventHandleOrder)
-                                              .ToArray();
-
-                _globalHandlers = serviceFactory.BuildAll<IHandleAsync<IEvent>>()
-                                              .ToArray();
-
-                _asyncHandlers = serviceFactory.BuildAll<IHandleAsync<TEvent>>()
-                                               .ToArray();
-            }
-        }
-
         public EventAggregator(Logger logger, IServiceFactory serviceFactory)
         {
             _logger = logger;
@@ -58,23 +37,6 @@ namespace NzbDrone.Core.Messaging.Events
                 _logger.Debug("Event {0} dropped, container is disposed", eventName);
                 return;
             }
-
-            /*
-                        int workerThreads;
-                        int completionPortThreads;
-                        ThreadPool.GetAvailableThreads(out workerThreads, out completionPortThreads);
-
-                        int maxCompletionPortThreads;
-                        int maxWorkerThreads;
-                        ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
-
-
-                        int minCompletionPortThreads;
-                        int minWorkerThreads;
-                        ThreadPool.GetMinThreads(out minWorkerThreads, out minCompletionPortThreads);
-
-                        _logger.Warn("Thread pool state WT:{0} PT:{1}  MAXWT:{2} MAXPT:{3} MINWT:{4} MINPT:{5}", workerThreads, completionPortThreads, maxWorkerThreads, maxCompletionPortThreads, minWorkerThreads, minCompletionPortThreads);
-            */
 
             _logger.Trace("Publishing {0}", eventName);
 
@@ -151,16 +113,6 @@ namespace NzbDrone.Core.Messaging.Events
             }
         }
 
-        private static string GetEventName(Type eventType)
-        {
-            if (!eventType.IsGenericType)
-            {
-                return eventType.Name;
-            }
-
-            return string.Format("{0}<{1}>", eventType.Name.Remove(eventType.Name.IndexOf('`')), eventType.GetGenericArguments()[0].Name);
-        }
-
         internal static int GetEventHandleOrder<TEvent>(IHandle<TEvent> eventHandler)
             where TEvent : class, IEvent
         {
@@ -179,6 +131,37 @@ namespace NzbDrone.Core.Messaging.Events
             }
 
             return (int)attribute.EventHandleOrder;
+        }
+
+        private static string GetEventName(Type eventType)
+        {
+            if (!eventType.IsGenericType)
+            {
+                return eventType.Name;
+            }
+
+            return string.Format("{0}<{1}>", eventType.Name.Remove(eventType.Name.IndexOf('`')), eventType.GetGenericArguments()[0].Name);
+        }
+
+        private sealed class EventSubscribers<TEvent>
+            where TEvent : class, IEvent
+        {
+            public IHandle<TEvent>[] _syncHandlers;
+            public IHandleAsync<TEvent>[] _asyncHandlers;
+            public IHandleAsync<IEvent>[] _globalHandlers;
+
+            public EventSubscribers(IServiceFactory serviceFactory)
+            {
+                _syncHandlers = serviceFactory.BuildAll<IHandle<TEvent>>()
+                                              .OrderBy(GetEventHandleOrder)
+                                              .ToArray();
+
+                _globalHandlers = serviceFactory.BuildAll<IHandleAsync<IEvent>>()
+                                              .ToArray();
+
+                _asyncHandlers = serviceFactory.BuildAll<IHandleAsync<TEvent>>()
+                                               .ToArray();
+            }
         }
     }
 }

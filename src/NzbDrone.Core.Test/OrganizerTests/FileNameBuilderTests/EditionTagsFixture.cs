@@ -90,11 +90,7 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
         [TestCase("35MM EDITION", "{Movie Title} [{EDITION TAGS}]", "Movie Title [35MM EDITION]")]
         public void should_always_lowercase_ordinals(string edition, string movieFormat, string expected)
         {
-            _movieFile.Edition = edition;
-            _namingConfig.StandardMovieFormat = movieFormat;
-
-            Subject.BuildFileName(_movie, _movieFile)
-                   .Should().Be(expected);
+            AssertEditionTagsFormat(edition, movieFormat, expected);
         }
 
         [TestCase("imax", "{Movie Title} [{edition tags}]", "Movie Title [imax]")]
@@ -154,6 +150,11 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
         [TestCase("THEATRICAL", "{Movie Title} [{Edition Tags}]", "Movie Title [Theatrical]")]
         [TestCase("director's CUt", "{Movie Title} [{Edition Tags}]", "Movie Title [Director's Cut]")]
         public void should_always_uppercase_special_strings(string edition, string movieFormat, string expected)
+        {
+            AssertEditionTagsFormat(edition, movieFormat, expected);
+        }
+
+        private void AssertEditionTagsFormat(string edition, string movieFormat, string expected)
         {
             _movieFile.Edition = edition;
             _namingConfig.StandardMovieFormat = movieFormat;

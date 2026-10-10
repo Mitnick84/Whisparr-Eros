@@ -42,22 +42,6 @@ namespace NzbDrone.Core.Test.NotificationTests.Plex
                 .Returns("1.20.0.12345-abcdef");
         }
 
-        private PlexSection GivenSection(int id)
-        {
-            var section = new PlexSection
-            {
-                Id = id
-            };
-
-            section.Locations.Add(new PlexSectionLocation
-            {
-                Id = id,
-                Path = RootFolderPath.AsOsAgnostic()
-            });
-
-            return section;
-        }
-
         [Test]
         public void should_update_all_sections_matching_the_movie_path()
         {
@@ -153,6 +137,22 @@ namespace NzbDrone.Core.Test.NotificationTests.Plex
 
             Mocker.GetMock<IPlexServerProxy>()
                 .Verify(v => v.Update(2, It.IsAny<string>(), _settings), Times.Once());
+        }
+
+        private static PlexSection GivenSection(int id)
+        {
+            var section = new PlexSection
+            {
+                Id = id
+            };
+
+            section.Locations.Add(new PlexSectionLocation
+            {
+                Id = id,
+                Path = RootFolderPath.AsOsAgnostic()
+            });
+
+            return section;
         }
     }
 }

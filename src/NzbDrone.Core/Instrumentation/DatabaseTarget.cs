@@ -26,6 +26,8 @@ namespace NzbDrone.Core.Instrumentation
             _connectionStringFactory = connectionStringFactory;
         }
 
+        public LoggingRule Rule { get; set; }
+
         public void Register()
         {
             var target = new SlowRunningAsyncTargetWrapper(this) { TimeToSleepBetweenBatches = 500 };
@@ -48,15 +50,13 @@ namespace NzbDrone.Core.Instrumentation
             Dispose();
         }
 
-        private void OnLogManagerOnConfigurationChanged(object sender, LoggingConfigurationChangedEventArgs args)
+        public void Handle(ApplicationShutdownRequested message)
         {
-            if (args.ActivatedConfiguration != null)
+            if (LogManager.Configuration?.FindTargetByName(TARGET_NAME) is SlowRunningAsyncTargetWrapper { WrappedTarget: DatabaseTarget target })
             {
-                Register();
+                target.UnRegister();
             }
         }
-
-        public LoggingRule Rule { get; set; }
 
         protected override void Write(LogEventInfo logEvent)
         {
@@ -113,6 +113,14 @@ namespace NzbDrone.Core.Instrumentation
             }
         }
 
+        private void OnLogManagerOnConfigurationChanged(object sender, LoggingConfigurationChangedEventArgs args)
+        {
+            if (args.ActivatedConfiguration != null)
+            {
+                Register();
+            }
+        }
+
         private void WritePostgresLog(Log log, string connectionString)
         {
             using (var connection =
@@ -152,14 +160,6 @@ namespace NzbDrone.Core.Instrumentation
                     sqlCommand.Parameters.Add(new SQLiteParameter("Level", DbType.String) { Value = log.Level });
                     sqlCommand.ExecuteNonQuery();
                 }
-            }
-        }
-
-        public void Handle(ApplicationShutdownRequested message)
-        {
-            if (LogManager.Configuration?.FindTargetByName(TARGET_NAME) is SlowRunningAsyncTargetWrapper { WrappedTarget: DatabaseTarget target })
-            {
-                target.UnRegister();
             }
         }
     }
