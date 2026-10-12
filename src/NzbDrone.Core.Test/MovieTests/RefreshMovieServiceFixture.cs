@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using FizzWare.NBuilder;
@@ -5,6 +6,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.AutoTagging;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource;
@@ -62,6 +64,42 @@ namespace NzbDrone.Core.Test.MovieTests
             Mocker.GetMock<IProvideMovieInfo>()
                   .Setup(s => s.GetMovieInfo(_movie.TmdbId))
                   .Returns(new System.Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>>(movie, new Studio(), new List<Performer>(), new List<Credit>()));
+        }
+
+        [Test]
+        public void should_refresh_jav_from_its_own_catalog()
+        {
+            _existingMovie.ForeignId = "tpdbjav:12345678-1234-4234-9234-123456789012";
+            _existingMovie.TpdbId = "12345678-1234-4234-9234-123456789012";
+            _existingMovie.MovieMetadata.Value.MetadataSource = Movies.MetadataSource.TpdbJav;
+            _movie.ForeignId = _existingMovie.ForeignId;
+            _movie.TpdbId = _existingMovie.TpdbId;
+            _movie.MetadataSource = Movies.MetadataSource.TpdbJav;
+            Mocker.GetMock<IProvideMovieInfo>().Setup(p => p.GetTpdbJavInfo(_movie.TpdbId))
+                .Returns(System.Tuple.Create(_movie, (Studio)null, new List<Performer>(), new List<Credit>()));
+            Subject.Execute(new RefreshMovieCommand(new List<int> { _movie.Id }));
+            Mocker.GetMock<IMovieMetadataService>().Verify(p => p.Upsert(It.Is<MovieMetadata>(m => m.MetadataSource == Movies.MetadataSource.TpdbJav)));
+            Mocker.GetMock<IProvideMovieInfo>().Verify(p => p.GetTpdbMovieInfo(It.IsAny<string>()), Times.Never);
+            Mocker.GetMock<IProvideMovieInfo>().Verify(p => p.GetSceneInfo(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void should_schedule_jav_refresh_independently_of_the_tmdb_changed_list()
+        {
+            _existingMovie.ForeignId = "tpdbjav:12345678-1234-4234-9234-123456789012";
+            _existingMovie.MovieMetadata.Value.MetadataSource = Movies.MetadataSource.TpdbJav;
+            _movie.ForeignId = _existingMovie.ForeignId;
+            _movie.MetadataSource = Movies.MetadataSource.TpdbJav;
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TMDB);
+            Mocker.GetMock<IProvideMovieInfo>().Setup(p => p.GetChangedMovies(It.IsAny<DateTime>())).Returns(new HashSet<int> { 999 });
+            Mocker.GetMock<IProvideMovieInfo>().Setup(p => p.GetChangedScenes(It.IsAny<DateTime>())).Returns(new HashSet<string>());
+            Mocker.GetMock<IMovieService>().Setup(s => s.AllMovieIdsOrderByLastInfoSync()).Returns(new List<int> { _existingMovie.Id });
+            Mocker.GetMock<IMovieService>().Setup(s => s.GetMovies(It.IsAny<IEnumerable<int>>())).Returns(new List<Movie> { _existingMovie });
+            Mocker.GetMock<ICheckIfMovieShouldBeRefreshed>().Setup(c => c.ShouldRefresh(It.IsAny<MovieMetadata>())).Returns(true);
+            Mocker.GetMock<IProvideMovieInfo>().Setup(p => p.GetTpdbJavInfo("12345678-1234-4234-9234-123456789012"))
+                .Returns(Tuple.Create(_movie, (Studio)null, new List<Performer>(), new List<Credit>()));
+            Subject.Execute(new RefreshMovieCommand { LastStartTime = DateTime.UtcNow.AddHours(-1), Trigger = CommandTrigger.Scheduled });
+            Mocker.GetMock<IProvideMovieInfo>().Verify(p => p.GetTpdbJavInfo(It.IsAny<string>()), Times.Once);
         }
 
         [Test]

@@ -50,6 +50,22 @@ namespace NzbDrone.Core.Test.MovieTests
         }
 
         [Test]
+        public void should_add_jav_using_qualified_id_before_generic_tpdb_id()
+        {
+            _fakeMovie.ForeignId = "tpdbjav:12345678-1234-4234-9234-123456789012";
+            _fakeMovie.TpdbId = "12345678-1234-4234-9234-123456789012";
+            _fakeMovie.TmdbId = 0;
+            _fakeMovie.MetadataSource = Movies.MetadataSource.TpdbJav;
+            var newMovie = new Movie { ForeignId = _fakeMovie.ForeignId, TpdbId = _fakeMovie.TpdbId, RootFolderPath = @"C:\Test\Movies" };
+            Mocker.GetMock<IProvideMovieInfo>().Setup(p => p.GetTpdbJavInfo(_fakeMovie.TpdbId))
+                .Returns(System.Tuple.Create(_fakeMovie, (Studio)null, new List<Performer>(), new List<Credit>()));
+            GivenValidPath();
+            Subject.AddMovie(newMovie).ForeignId.Should().Be(_fakeMovie.ForeignId);
+            Mocker.GetMock<IProvideMovieInfo>().Verify(p => p.GetTpdbMovieInfo(It.IsAny<string>()), Times.Never);
+            Mocker.GetMock<IProvideMovieInfo>().Verify(p => p.GetSceneInfo(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
         public void should_be_able_to_add_a_movie_without_passing_in_title()
         {
             var newMovie = new Movie
