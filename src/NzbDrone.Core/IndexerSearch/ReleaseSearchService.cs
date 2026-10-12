@@ -66,8 +66,14 @@ namespace NzbDrone.Core.IndexerSearch
             {
                 var movieSearchSpec = Get<MovieSearchCriteria>(movie, userInvokedSearch, interactiveSearch);
 
+                if (movie.MovieMetadata.Value.MetadataSource == Movies.MetadataSource.TpdbJav &&
+                    movie.MovieMetadata.Value.Code.IsNotNullOrWhiteSpace())
+                {
+                    movieSearchSpec.SceneTitles = new List<string> { movie.MovieMetadata.Value.Code };
+                }
+
                 // For movies, add search with year
-                if (movie.Year > 1900)
+                if (movie.Year > 1900 && movie.MovieMetadata.Value.MetadataSource != Movies.MetadataSource.TpdbJav)
                 {
                     movieSearchSpec.SceneTitles.AddRange(movieSearchSpec.SceneTitles.Select(title => $"{title} {movie.Year}").ToList());
                 }
