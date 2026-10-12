@@ -53,7 +53,7 @@ function AddNewMovie() {
             className={styles.searchInput}
             name="movieLookup"
             value={term}
-            placeholder="e.g. https://theporndb.net/movies/bellesafilms-consumed-by-desire, tpdbid:5267419, tpdb:d534a2e3-b77a-4aac-95f6-e5671faf7165"
+            placeholder={translate('MovieLookupPlaceholder')}
             autoFocus={true}
             onChange={onSearchInputChange}
           />
