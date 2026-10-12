@@ -13,6 +13,7 @@ namespace NzbDrone.Core.MetadataSource
         MovieMetadata GetMovieByImdbId(string imdbId);
         Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetMovieInfo(int tmdbId);
         Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetTpdbMovieInfo(string tpdbId);
+        Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetTpdbJavInfo(string tpdbId);
         Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetSceneInfo(string stashId);
         List<MovieMetadata> GetBulkMovieInfo(List<int> tmdbIds);
         List<MovieMetadata> GetBulkTpdbMovieInfo(List<string> tpdbIds);
