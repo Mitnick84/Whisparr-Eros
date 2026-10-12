@@ -64,6 +64,7 @@ namespace Whisparr.Api.V3.Config
         public bool WhisparrMonitorNewItems { get; set; }
         public MovieMetadataType WhisparrMovieMetadataSource { get; set; }
         public string ThePornDbApiKey { get; set; }
+        public bool ThePornDbIncludeJav { get; set; }
         public bool WhisparrValidateRuntime { get; set; }
         public int WhisparrValidateRuntimeLimit { get; set; }
     }
@@ -129,6 +130,7 @@ namespace Whisparr.Api.V3.Config
                 WhisparrMonitorNewItems = configService.WhisparrMonitorNewItems,
                 WhisparrMovieMetadataSource = configService.WhisparrMovieMetadataSource,
                 ThePornDbApiKey = configService.ThePornDbApiKey,
+                ThePornDbIncludeJav = configService.ThePornDbIncludeJav,
                 WhisparrValidateRuntime = configService.WhisparrValidateRuntime,
                 WhisparrValidateRuntimeLimit = configService.WhisparrValidateRuntimeLimit
             };
