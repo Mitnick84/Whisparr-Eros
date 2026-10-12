@@ -273,6 +273,11 @@ namespace NzbDrone.Core.Movies
 
         private Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetMetadata(Movie movie)
         {
+            if (movie.ForeignId?.StartsWith("tpdbjav:", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return _movieInfo.GetTpdbJavInfo(movie.ForeignId.Substring("tpdbjav:".Length));
+            }
+
             if (movie.MovieMetadata.Value != null)
             {
                 if (movie.MovieMetadata.Value.MetadataSource == MetadataSource.Tmdb)
@@ -428,7 +433,8 @@ namespace NzbDrone.Core.Movies
                         var movieLocal = movie;
                         var isScene = movie.MovieMetadata.Value.ItemType == ItemType.Scene;
                         var inChangedList = isScene ? updatedScenes.Contains(movie.ForeignId) : updatedMovies.Contains(movie.ForeignId);
-                        var noChangedList = isScene ? updatedScenes.Count == 0 : updatedMovies.Count == 0;
+                        var noChangedList = movie.MovieMetadata.Value.MetadataSource == MetadataSource.TpdbJav ||
+                            (isScene ? updatedScenes.Count == 0 : updatedMovies.Count == 0);
                         if ((
                             noChangedList
                             && _checkIfMovieShouldBeRefreshed.ShouldRefresh(movie.MovieMetadata))

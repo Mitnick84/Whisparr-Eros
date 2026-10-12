@@ -101,6 +101,7 @@ namespace NzbDrone.Core.Movies
     {
         Tmdb,
         Stash,
-        TpdbMovie
+        TpdbMovie,
+        TpdbJav
     }
 }

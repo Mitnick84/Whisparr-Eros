@@ -222,6 +222,11 @@ namespace NzbDrone.Core.Movies
 
         private MovieMetadata GetMetadata(Movie movie)
         {
+            if (movie.ForeignId?.StartsWith("tpdbjav:", System.StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return _movieInfo.GetTpdbJavInfo(movie.ForeignId.Substring("tpdbjav:".Length)).Item1;
+            }
+
             if (int.TryParse(movie.ForeignId, out var tmdbId))
             {
                 return _movieInfo.GetMovieInfo(tmdbId).Item1;

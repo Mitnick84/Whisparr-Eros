@@ -707,6 +707,18 @@ namespace NzbDrone.Core.Movies
 
             if (result == null && parsedMovieInfo.Code.IsNotNullOrWhiteSpace())
             {
+                var codeMatches = _movieRepository.FindByCode(parsedMovieInfo.Code) ?? new List<Movie>();
+                if (codeMatches.Count > 1)
+                {
+                    _logger.Debug("Multiple library entries have product code {0}; refusing an ambiguous match", parsedMovieInfo.Code);
+                    return null;
+                }
+
+                if (codeMatches.Count == 1)
+                {
+                    return codeMatches[0];
+                }
+
                 result = FindByTitle(parsedMovieInfo.Code);
             }
 

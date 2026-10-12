@@ -16,6 +16,7 @@ namespace NzbDrone.Core.Movies
     {
         bool MoviePathExists(string path);
         List<Movie> FindByTitles(List<string> titles);
+        List<Movie> FindByCode(string code);
         IEnumerable<Movie> FindByIds(List<int> ids);
         Movie FindByImdbId(string imdbid);
         Movie FindByForeignId(string foreignId);
@@ -175,6 +176,19 @@ namespace NzbDrone.Core.Movies
             results.AddRange(FindByAltTitles(distinct));
 
             return results.DistinctBy(x => x.Id).ToList();
+        }
+
+        public List<Movie> FindByCode(string code)
+        {
+            var builder = new SqlBuilder(_database.DatabaseType)
+                .Join<Movie, MovieMetadata>((m, mm) => m.MovieMetadataId == mm.Id)
+                .Where("UPPER(\"MovieMetadata\".\"Code\") = @code", new { code = code.ToUpperInvariant() });
+
+            return _database.QueryJoined<Movie, MovieMetadata>(builder, (movie, metadata) =>
+            {
+                movie.MovieMetadata = metadata;
+                return movie;
+            }).AsList();
         }
 
         public List<Movie> FindByStudioAndDate(string studioForeignId, string date)
