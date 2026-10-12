@@ -814,6 +814,12 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             }
 
             var result = new List<object>();
+
+            if (itemType == ItemType.Movie && ShouldIncludeJavInTpdbSearch(title))
+            {
+                return SearchForNewMovie(title.Trim()).Cast<object>().ToList();
+            }
+
             var movieInfo = Parser.Parser.ParseMoviePath(title);
 
             // Null is passed when a Filename is passed where the type is not set
@@ -892,9 +898,30 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             if (_configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDB)
             {
                 results.AddRange(SearchForNewTpdbMovie(title));
+
+                if (ShouldIncludeJavInTpdbSearch(title))
+                {
+                    try
+                    {
+                        results.AddRange(SearchForNewJavMovie(title));
+                    }
+                    catch (Exception ex) when (ex is SkyHookException or HttpException or JsonException)
+                    {
+                        // Optional JAV failures must not discard the existing TPDB movie results or expose credentials.
+                        _logger.Warn("The additional ThePornDB JAV search failed. Only TPDB movie results are available. Check the API key and JAV access in General Settings.");
+                    }
+                }
             }
 
             return results;
+        }
+
+        private bool ShouldIncludeJavInTpdbSearch(string title)
+        {
+            return _configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDB &&
+                   _configService.ThePornDbIncludeJav &&
+                   !title.IsNullOrWhiteSpace() &&
+                   !Uri.TryCreate(title, UriKind.Absolute, out _);
         }
 
         public List<Movie> SearchForNewJavMovie(string title)
