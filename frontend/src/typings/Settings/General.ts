@@ -57,6 +57,7 @@ export default interface General {
   whisparrFuzzyTitleMatchingThreshold: number;
   whisparrMonitorNewItems: boolean;
   whisparrMovieMetadataSource: string;
+  thePornDbApiKey: string;
   whisparrValidateRuntime: boolean;
   whisparrValidateRuntimeLimit: number;
 }
