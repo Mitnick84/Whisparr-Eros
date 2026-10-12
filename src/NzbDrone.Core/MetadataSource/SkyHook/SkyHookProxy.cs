@@ -803,7 +803,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             }
 
             if (ThePornDbJavProxy.IsJavLookup(title) ||
-                (_configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDB_JAV && itemType != ItemType.Scene))
+                (_configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDBJAV && itemType != ItemType.Scene))
             {
                 if (itemType == ItemType.Scene)
                 {
@@ -872,7 +872,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
         public List<Movie> SearchForNewMovie(string title)
         {
-            if (ThePornDbJavProxy.IsJavLookup(title) || _configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDB_JAV)
+            if (ThePornDbJavProxy.IsJavLookup(title) || _configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDBJAV)
             {
                 return SearchForNewJavMovie(title);
             }
