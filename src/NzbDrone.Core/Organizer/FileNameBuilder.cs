@@ -648,6 +648,7 @@ namespace NzbDrone.Core.Organizer
         private void AddMovieTokens(Dictionary<string, Func<TokenMatch, string>> tokenHandlers, Movie movie)
         {
             tokenHandlers["{Movie Title}"] = m => Truncate(GetLanguageTitle(movie), m.CustomFormat);
+            tokenHandlers["{Movie Code}"] = m => movie.MovieMetadata.Value.Code ?? string.Empty;
             tokenHandlers["{Movie CleanTitle}"] = m => Truncate(CleanTitle(GetLanguageTitle(movie)), m.CustomFormat);
             tokenHandlers["{Movie TitleThe}"] = m => Truncate(TitleThe(movie.Title), m.CustomFormat);
             tokenHandlers["{Movie CleanTitleThe}"] = m => Truncate(CleanTitle(TitleThe(movie.Title)), m.CustomFormat);
