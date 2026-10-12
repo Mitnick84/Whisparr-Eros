@@ -32,6 +32,7 @@ function WhisparrSettings({
     whisparrMonitorNewItems,
     whisparrMovieMetadataSource,
     thePornDbApiKey,
+    thePornDbIncludeJav,
     whisparrValidateRuntime,
     whisparrValidateRuntimeLimit,
   } = settings;
@@ -50,7 +51,7 @@ function WhisparrSettings({
       value: translate('TPDB'),
     },
     {
-      key: 'tpdb_jav',
+      key: 'tpdbjav',
       value: translate('ThePornDbJav'),
     },
   ];
@@ -191,6 +192,19 @@ function WhisparrSettings({
           {...whisparrMovieMetadataSource}
         />
       </FormGroup>
+
+      {whisparrMovieMetadataSource.value === 'tpdb' && (
+        <FormGroup>
+          <FormLabel>{translate('ThePornDbIncludeJav')}</FormLabel>
+          <FormInputGroup
+            type={inputTypes.CHECK}
+            name="thePornDbIncludeJav"
+            helpText={translate('ThePornDbIncludeJavHelpText')}
+            onChange={onInputChange}
+            {...thePornDbIncludeJav}
+          />
+        </FormGroup>
+      )}
 
       <FormGroup>
         <FormLabel>{translate('ThePornDbApiKey')}</FormLabel>
