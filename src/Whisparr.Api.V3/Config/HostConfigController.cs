@@ -119,6 +119,7 @@ namespace Whisparr.Api.V3.Config
             // Prevent secrets from being exposed
             resource.SslCertPassword = resource.SslCertPassword.IsNullOrWhiteSpace() ? string.Empty : PrivateValue;
             resource.ProxyPassword = resource.ProxyPassword.IsNullOrWhiteSpace() ? string.Empty : PrivateValue;
+            resource.ThePornDbApiKey = resource.ThePornDbApiKey.IsNullOrWhiteSpace() ? string.Empty : PrivateValue;
 
             return resource;
         }
@@ -141,6 +142,11 @@ namespace Whisparr.Api.V3.Config
             if (resource.ProxyPassword == PrivateValue)
             {
                 dictionary["ProxyPassword"] = _configService.ProxyPassword;
+            }
+
+            if (resource.ThePornDbApiKey == PrivateValue)
+            {
+                dictionary["ThePornDbApiKey"] = _configService.ThePornDbApiKey;
             }
 
             _configFileProvider.SaveConfigDictionary(dictionary);

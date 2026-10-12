@@ -63,6 +63,7 @@ namespace Whisparr.Api.V3.Config
         public int WhisparrFuzzyTitleMatchingThreshold { get; set; }
         public bool WhisparrMonitorNewItems { get; set; }
         public MovieMetadataType WhisparrMovieMetadataSource { get; set; }
+        public string ThePornDbApiKey { get; set; }
         public bool WhisparrValidateRuntime { get; set; }
         public int WhisparrValidateRuntimeLimit { get; set; }
     }
@@ -127,6 +128,7 @@ namespace Whisparr.Api.V3.Config
                 WhisparrFuzzyTitleMatchingThreshold = configService.WhisparrFuzzyTitleMatchingThreshold,
                 WhisparrMonitorNewItems = configService.WhisparrMonitorNewItems,
                 WhisparrMovieMetadataSource = configService.WhisparrMovieMetadataSource,
+                ThePornDbApiKey = configService.ThePornDbApiKey,
                 WhisparrValidateRuntime = configService.WhisparrValidateRuntime,
                 WhisparrValidateRuntimeLimit = configService.WhisparrValidateRuntimeLimit
             };
