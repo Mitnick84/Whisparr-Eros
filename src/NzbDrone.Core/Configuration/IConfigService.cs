@@ -126,6 +126,7 @@ namespace NzbDrone.Core.Configuration
         bool WhisparrMonitorNewItems { get; set; }
         MovieMetadataType WhisparrMovieMetadataSource { get; }
         string ThePornDbApiKey { get; }
+        bool ThePornDbIncludeJav { get; }
         bool WhisparrValidateRuntime { get; }
         int WhisparrValidateRuntimeLimit { get; }
         int WhisparrFolderLimit { get; set; }

@@ -620,6 +620,12 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("ThePornDbApiKey", value); }
         }
 
+        public bool ThePornDbIncludeJav
+        {
+            get { return GetValueBoolean("ThePornDbIncludeJav", false); }
+            set { SetValue("ThePornDbIncludeJav", value); }
+        }
+
         private string GetValue(string key)
         {
             return GetValue(key, string.Empty);
