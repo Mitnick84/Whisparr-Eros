@@ -5,6 +5,6 @@ namespace NzbDrone.Core.Configuration
         NONE,
         TMDB,
         TPDB,
-        TPDB_JAV
+        TPDBJAV
     }
 }
