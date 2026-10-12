@@ -206,6 +206,7 @@ const studioTokens = [
 ];
 
 const movieIdTokens = [
+  { token: '{Movie Code}', example: 'DBIF-001' },
   { token: '{ImdbId}', example: 'tt12345' },
   { token: '{TmdbId}', example: '123456' },
 ];
