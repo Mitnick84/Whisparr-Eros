@@ -19,6 +19,15 @@ Generic `tpdb:` and `tpdbid:` identifiers still refer to the TPDB movie catalog.
 They are not interchangeable with JAV identifiers. Searching a JAV URL in
 Scenes > Add New explains that it belongs in Movies > Add New.
 
+To discover western movies and JAV in the same search, select **TPDB** and enable
+**Include JAV in TPDB movie searches**. This option is disabled by default and
+requires the same ThePornDB API key. Ordinary title/code queries return TPDB movie
+results followed by JAV results, retaining their separate source IDs. Explicit
+URLs/IDs target only their own catalog. If the additional JAV request fails,
+TPDB movie results remain available and a warning is logged; explicit JAV lookups
+still report errors. This combined mode is an optional extension to the proposed
+mutually exclusive source design and requires maintainer agreement.
+
 The adapter preserves each record's canonical UUID as `tpdbjav:<UUID>` and its
 TPDB UUID separately. Refresh and library import use the JAV endpoint regardless
 of the current default source. TPDB studio/performer IDs are never used as
