@@ -55,6 +55,17 @@ namespace NzbDrone.Core.Test.IndexerSearchTests
         }
 
         [Test]
+        public async Task should_search_jav_by_product_code_without_studio_or_year()
+        {
+            _movie.MovieMetadata.Value.MetadataSource = Movies.MetadataSource.TpdbJav;
+            _movie.MovieMetadata.Value.Code = "H113SL-013AI";
+            _movie.MovieMetadata.Value.StudioTitle = null;
+            var criteria = WatchForSearchCriteria();
+            await Subject.MovieSearch(_movie, true, false);
+            criteria.Should().ContainSingle().Which.SceneTitles.Should().Equal("H113SL-013AI");
+        }
+
+        [Test]
         public async Task Tags_IndexerTags_MovieNoTags_IndexerNotIncluded()
         {
             _mockIndexer.SetupGet(s => s.Definition).Returns(new IndexerDefinition
