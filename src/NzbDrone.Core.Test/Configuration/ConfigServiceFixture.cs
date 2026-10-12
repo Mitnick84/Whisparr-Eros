@@ -57,6 +57,12 @@ namespace NzbDrone.Core.Test.Configuration
         }
 
         [Test]
+        public void should_not_enable_additional_jav_requests_by_default()
+        {
+            Subject.ThePornDbIncludeJav.Should().BeFalse();
+        }
+
+        [Test]
         public void should_persist_and_read_back_disabled_whisparr_monitor_new_items()
         {
             Subject.WhisparrMonitorNewItems = false;
