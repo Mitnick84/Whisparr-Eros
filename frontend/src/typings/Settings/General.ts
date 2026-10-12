@@ -58,6 +58,7 @@ export default interface General {
   whisparrMonitorNewItems: boolean;
   whisparrMovieMetadataSource: string;
   thePornDbApiKey: string;
+  thePornDbIncludeJav: boolean;
   whisparrValidateRuntime: boolean;
   whisparrValidateRuntimeLimit: number;
 }
