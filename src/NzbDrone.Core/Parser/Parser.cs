@@ -59,6 +59,12 @@ namespace NzbDrone.Core.Parser
 
         private static readonly Regex[] ReportTitleRegex = new[]
         {
+            // Leading JAV product codes must survive a title, release year or metadata UUID later in the filename.
+            // Includes the alphanumeric studio/product codes used by TPDB's JAV catalog.
+            new Regex(@"^(?:\[[^\]]+\][\s._-]*)*(?<code>(?:[A-Z]{2,5}-[0-9]{3,5}|[A-Z][0-9]{3}[A-Z]{2}-[0-9]{3}[A-Z]{2}|FC2[- _]*PPV[- _]*[0-9]{4,7}))(?=$|[\s._\[\]()-])",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled,
+                RegexDefaults.Timeout),
+
             // Site - Performers - Title (Month DD, YYYY) [Quality]
             // Pure Taboo - Sarah Arabic, Lily LaBeau - A Costly Divorce (June 24, 2025) [1080p HEVC x265]
             new Regex(@"^(?<studiotitle>[^-]+?)(?<releasetoken>\s*-\s*.+?)\s*\(\s*(?<airmonthname>January|February|March|April|May|June|July|August|September|October|November|December)\s+(?<airday>[0-3]?\d),?\s+(?<airyear>(19|20)\d{2})\s*\)",
