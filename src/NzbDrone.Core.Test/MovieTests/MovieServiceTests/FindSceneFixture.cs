@@ -35,6 +35,22 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
                 NzbDrone.Common.Instrumentation.NzbDroneLogger.GetLogger(typeof(MovieService)));
         }
 
+        [Test]
+        public void should_not_match_ambiguous_product_codes()
+        {
+            _movieRepositoryMock.Setup(r => r.FindByCode("DBIF-001"))
+                .Returns(new List<Movie> { new Movie { Id = 1 }, new Movie { Id = 2 } });
+            Assert.That(_movieService.FindScene(new ParsedMovieInfo { Code = "DBIF-001" }), Is.Null);
+        }
+
+        [Test]
+        public void should_match_product_code_without_title_or_studio()
+        {
+            var movie = new Movie { Id = 42, MovieMetadata = new MovieMetadata { Title = "Sample Title", Code = "DBIF-001", MetadataSource = Movies.MetadataSource.TpdbJav } };
+            _movieRepositoryMock.Setup(r => r.FindByCode("DBIF-001")).Returns(new List<Movie> { movie });
+            Assert.That(_movieService.FindScene(new ParsedMovieInfo { Code = "DBIF-001" }), Is.SameAs(movie));
+        }
+
         [TestCase(null)]
         [TestCase("")]
         [TestCase("   ")]
