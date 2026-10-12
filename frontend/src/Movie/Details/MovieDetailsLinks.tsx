@@ -48,7 +48,9 @@ function MovieDetailsLinks({
     if (tpdbId) {
       validLinks.push({
         name: translate('TPDb'),
-        url: `https://theporndb.net/movies/${tpdbId}`,
+        url: website?.startsWith('https://theporndb.net/jav/')
+          ? `https://theporndb.net/jav/${tpdbId}`
+          : `https://theporndb.net/movies/${tpdbId}`,
         externalId: tpdbId,
       });
     }
