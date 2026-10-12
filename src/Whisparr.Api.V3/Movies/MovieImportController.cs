@@ -232,6 +232,12 @@ namespace Whisparr.Api.V3.Movies
 
         private (MovieMetadata Metadata, List<Credit> Credits) GetMetadata(Movie movie)
         {
+            if (movie.ForeignId?.StartsWith("tpdbjav:", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var javResult = _movieInfo.GetTpdbJavInfo(movie.ForeignId.Substring("tpdbjav:".Length));
+                return (javResult.Item1, javResult.Item4);
+            }
+
             if (int.TryParse(movie.ForeignId, out var tmdbId))
             {
                 var result = _movieInfo.GetMovieInfo(tmdbId);
