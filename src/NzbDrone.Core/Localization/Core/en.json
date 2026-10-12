@@ -2261,6 +2261,8 @@
   "ThePornDbApiKey": "ThePornDB API Key",
   "ThePornDbApiKeyHelpText": "Required for the JAV catalog. Create a token in your ThePornDB account. Stored locally and hidden in API responses.",
   "ThePornDbJav": "ThePornDB JAV",
+  "ThePornDbIncludeJav": "Include JAV in TPDB movie searches",
+  "ThePornDbIncludeJavHelpText": "Also search ThePornDB's JAV catalog when TPDB is selected. Requires a ThePornDB API key. Disabled by default; unavailable JAV results do not remove TPDB movie results. Explicit URLs and IDs use only their own catalog.",
   "ThisCannotBeCancelled": "This cannot be cancelled once started without disabling all of your indexers.",
   "Thursday": "Thursday",
   "Time": "Time",
