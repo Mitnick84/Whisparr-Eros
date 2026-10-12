@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Http;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MetadataSource.SkyHook;
+using NzbDrone.Core.MetadataSource.SkyHook.Resource;
 using NzbDrone.Core.MetadataSource.ThePornDb;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Credits;
 using NzbDrone.Core.Movies.Performers;
 using NzbDrone.Core.Movies.Studios;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Test.Common;
 
 namespace NzbDrone.Core.Test.MetadataSource.SkyHook
 {
@@ -51,7 +56,7 @@ namespace NzbDrone.Core.Test.MetadataSource.SkyHook
         [TestCase("Example Title")]
         public void should_preserve_code_or_title_search_terms_for_jav(string term)
         {
-            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TPDB_JAV);
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TPDBJAV);
             Subject.SearchForNewEntity(term, ItemType.Movie).Should().ContainSingle();
             Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(term), Times.Once);
         }
@@ -76,7 +81,7 @@ namespace NzbDrone.Core.Test.MetadataSource.SkyHook
         [TestCase("https://theporndb.net/movies/example")]
         public void should_explain_wrong_catalog_ids_in_jav_mode(string term)
         {
-            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TPDB_JAV);
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TPDBJAV);
             var act = () => Subject.SearchForNewEntity(term, ItemType.Movie);
             act.Should().Throw<InvalidSearchTermException>();
         }
@@ -86,6 +91,90 @@ namespace NzbDrone.Core.Test.MetadataSource.SkyHook
         {
             var act = () => Subject.SearchForNewEntity("tpdbjav:11655355", ItemType.Scene);
             act.Should().Throw<InvalidSearchTermException>().WithMessage("*Movies*Add New*");
+        }
+
+        private Movie GivenTpdbMovieSearch(bool includeJav)
+        {
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TPDB);
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.ThePornDbIncludeJav).Returns(includeJav);
+            var existing = new Movie { Id = 43, MovieMetadata = new MovieMetadata { ForeignId = "tpdbId:western-id", Title = "Western Title" } };
+            Mocker.GetMock<IMovieService>().Setup(s => s.FindByForeignId("tpdbId:western-id")).Returns(existing);
+            var resources = new List<MovieResource>
+            {
+                new MovieResource { ItemType = ItemType.Movie, ForeignIds = new ExternalIdResource { TpdbId = "western-id" } }
+            };
+            Mocker.GetMock<IHttpClient>().Setup(c => c.Get<List<MovieResource>>(It.IsAny<HttpRequest>()))
+                .Returns((HttpRequest request) => new HttpResponse<List<MovieResource>>(new HttpResponse(request, new HttpHeader(), resources.ToJson(), HttpStatusCode.OK)));
+            return existing;
+        }
+
+        [TestCase("DBIF-001")]
+        [TestCase("H113SL-013AI")]
+        [TestCase("Example Title")]
+        public void should_include_both_catalogs_only_when_enabled(string term)
+        {
+            var western = GivenTpdbMovieSearch(true);
+            var results = Subject.SearchForNewEntity(term, ItemType.Movie);
+            results.Should().HaveCount(2);
+            results[0].Should().BeSameAs(western);
+            ((Movie)results[1]).ForeignId.Should().Be(_metadata.ForeignId);
+            Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(term), Times.Once);
+        }
+
+        [Test]
+        public void should_not_query_jav_for_an_unchanged_tpdb_configuration()
+        {
+            var western = GivenTpdbMovieSearch(false);
+            Subject.SearchForNewMovie("Example Title").Should().ContainSingle().Which.Should().BeSameAs(western);
+            Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void should_not_expand_tmdb_searches_with_the_tpdb_option()
+        {
+            GivenTpdbMovieSearch(true);
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.WhisparrMovieMetadataSource).Returns(MovieMetadataType.TMDB);
+            Subject.SearchForNewMovie("Example Title");
+            Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void should_not_expand_scene_searches_with_the_tpdb_option()
+        {
+            GivenTpdbMovieSearch(true);
+            Subject.SearchForNewEntity("Example Title", ItemType.Scene);
+            Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void should_retain_western_results_when_optional_jav_search_fails()
+        {
+            var western = GivenTpdbMovieSearch(true);
+            Mocker.GetMock<IThePornDbJavProxy>().Setup(p => p.Search(It.IsAny<string>())).Throws(new SkyHookException("Synthetic unavailable catalog"));
+            Subject.SearchForNewMovie("Example Title").Should().ContainSingle().Which.Should().BeSameAs(western);
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_not_fan_out_explicit_jav_ids_in_combined_mode()
+        {
+            GivenTpdbMovieSearch(true);
+            Subject.SearchForNewMovie("tpdbjav:11655355").Should().ContainSingle().Which.ForeignId.Should().Be(_metadata.ForeignId);
+            Mocker.GetMock<IHttpClient>().Verify(c => c.Get<List<MovieResource>>(It.IsAny<HttpRequest>()), Times.Never);
+            Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(It.IsAny<string>()), Times.Never);
+        }
+
+        [TestCase("tpdb:11655355")]
+        [TestCase("tpdbid:11655355")]
+        [TestCase("https://theporndb.net/movies/example-title")]
+        public void should_not_query_jav_for_an_explicit_movie_lookup(string term)
+        {
+            GivenTpdbMovieSearch(true);
+            Mocker.GetMock<IHttpClient>().Setup(c => c.Get<MovieResource>(It.IsAny<HttpRequest>()))
+                .Returns((HttpRequest request) => new HttpResponse<MovieResource>(new HttpResponse(request, new HttpHeader(), "", HttpStatusCode.NotFound)));
+            Mocker.GetMock<IThePornDbJavProxy>().Setup(p => p.Search(It.IsAny<string>())).Throws(new Exception("Unexpected JAV request"));
+            Subject.SearchForNewMovie(term);
+            Mocker.GetMock<IThePornDbJavProxy>().Verify(p => p.Search(It.IsAny<string>()), Times.Never);
         }
     }
 }
