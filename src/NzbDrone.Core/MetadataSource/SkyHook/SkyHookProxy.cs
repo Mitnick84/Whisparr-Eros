@@ -16,6 +16,7 @@ using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource.SkyHook.Resource;
+using NzbDrone.Core.MetadataSource.ThePornDb;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.AlternativeTitles;
 using NzbDrone.Core.Movies.Collections;
@@ -46,6 +47,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
         private readonly IMovieService _movieService;
         private readonly IMovieMetadataService _movieMetadataService;
         private readonly IStudioService _studioService;
+        private readonly IThePornDbJavProxy _javProxy;
         public SkyHookProxy(IHttpClient httpClient,
             IWhisparrCloudRequestBuilder requestBuilder,
             IConfigService configService,
@@ -53,6 +55,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             IMovieService movieService,
             IMovieMetadataService movieMetadataService,
             IStudioService studioService,
+            IThePornDbJavProxy javProxy,
             Logger logger)
         {
             _httpClient = httpClient;
@@ -70,6 +73,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             _movieService = movieService;
             _movieMetadataService = movieMetadataService;
             _studioService = studioService;
+            _javProxy = javProxy;
 
             _logger = logger;
         }
@@ -399,6 +403,11 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             movie.PerformerNames = credits.Select(p => p.PersonName).ToList();
 
             return new Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>>(movie, MapStudio(httpResponse.Resource.Studio), performers, credits);
+        }
+
+        public Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetTpdbJavInfo(string tpdbId)
+        {
+            return _javProxy.GetJavInfo(tpdbId);
         }
 
         public Tuple<MovieMetadata, Studio, List<Performer>, List<Credit>> GetSceneInfo(string stashId)
@@ -793,6 +802,17 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
                 throw new InvalidSearchTermException("Invalid search term '{0}'", title);
             }
 
+            if (ThePornDbJavProxy.IsJavLookup(title) ||
+                (_configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDB_JAV && itemType != ItemType.Scene))
+            {
+                if (itemType == ItemType.Scene)
+                {
+                    throw new InvalidSearchTermException("Add ThePornDB JAV entries from Movies > Add New.");
+                }
+
+                return SearchForNewJavMovie(title.Trim()).Cast<object>().ToList();
+            }
+
             var result = new List<object>();
             var movieInfo = Parser.Parser.ParseMoviePath(title);
 
@@ -852,6 +872,11 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
         public List<Movie> SearchForNewMovie(string title)
         {
+            if (ThePornDbJavProxy.IsJavLookup(title) || _configService.WhisparrMovieMetadataSource == MovieMetadataType.TPDB_JAV)
+            {
+                return SearchForNewJavMovie(title);
+            }
+
             var results = new List<Movie>();
 
             if (_configService.WhisparrMovieMetadataSource == MovieMetadataType.NONE)
@@ -870,6 +895,34 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             }
 
             return results;
+        }
+
+        public List<Movie> SearchForNewJavMovie(string title)
+        {
+            if (ThePornDbJavProxy.IsJavLookup(title))
+            {
+                try
+                {
+                    var metadata = GetTpdbJavInfo(ThePornDbJavProxy.GetIdentifier(title)).Item1;
+                    return new List<Movie> { _movieService.FindByForeignId(metadata.ForeignId) ?? new Movie { MovieMetadata = metadata } };
+                }
+                catch (MovieNotFoundException)
+                {
+                    return new List<Movie>();
+                }
+            }
+
+            if (title.StartsWith(TmdbPrefix, StringComparison.OrdinalIgnoreCase) ||
+                title.StartsWith(TmdbIdPrefix, StringComparison.OrdinalIgnoreCase) ||
+                title.StartsWith(TpdbPrefix, StringComparison.OrdinalIgnoreCase) ||
+                title.StartsWith(TpdbIdPrefix, StringComparison.OrdinalIgnoreCase) ||
+                Uri.TryCreate(title, UriKind.Absolute, out _))
+            {
+                throw new InvalidSearchTermException("For JAV use a ThePornDB /jav/ URL, tpdbjav:<UUID or numeric ID>, a product code or a title.");
+            }
+
+            return _javProxy.Search(title).Select(metadata =>
+                _movieService.FindByForeignId(metadata.ForeignId) ?? new Movie { MovieMetadata = metadata }).ToList();
         }
 
         public List<Movie> SearchForNewTmdbMovie(string title)
