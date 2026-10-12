@@ -614,6 +614,12 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("WhisparrMovieMetadataSource", value); }
         }
 
+        public string ThePornDbApiKey
+        {
+            get { return GetValue("ThePornDbApiKey", string.Empty); }
+            set { SetValue("ThePornDbApiKey", value); }
+        }
+
         private string GetValue(string key)
         {
             return GetValue(key, string.Empty);
@@ -675,7 +681,7 @@ namespace NzbDrone.Core.Configuration
         {
             key = key.ToLowerInvariant();
 
-            _logger.Trace("Writing Setting to database. Key:'{0}' Value:'{1}'", key, value);
+            _logger.Trace("Writing Setting to database. Key:'{0}' Value:'{1}'", key, key == "theporndbapikey" ? "(removed)" : value);
             _repository.Upsert(key, value);
 
             ClearCache();
