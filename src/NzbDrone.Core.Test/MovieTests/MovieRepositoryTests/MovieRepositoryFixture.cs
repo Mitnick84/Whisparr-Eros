@@ -37,6 +37,22 @@ namespace NzbDrone.Core.Test.MovieTests.MovieRepositoryTests
         }
 
         [Test]
+        public void should_query_product_codes_case_insensitively_without_matching_other_codes()
+        {
+            var profile = GivenProfile();
+            var matchingMovie = GivenPagedMovie(profile.Id, 0);
+            var otherMovie = GivenPagedMovie(profile.Id, 0);
+            var matchingMetadata = Db.All<MovieMetadata>().Single(m => m.Id == matchingMovie.MovieMetadataId);
+            matchingMetadata.Code = "h113Sl-013ai";
+            Db.Update(matchingMetadata);
+            var otherMetadata = Db.All<MovieMetadata>().Single(m => m.Id == otherMovie.MovieMetadataId);
+            otherMetadata.Code = "H113SL-014AI";
+            Db.Update(otherMetadata);
+            Subject.FindByCode("H113SL-013AI").Should().ContainSingle().Which.Id.Should().Be(matchingMovie.Id);
+            Subject.FindByCode("DBIF-001").Should().BeEmpty();
+        }
+
+        [Test]
         public void should_load_quality_profile()
         {
             var profile = new QualityProfile
