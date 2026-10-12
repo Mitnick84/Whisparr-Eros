@@ -118,6 +118,15 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
             _movieFile.Quality.Revision.Version = 2;
         }
 
+        [Test]
+        public void should_preserve_movie_product_code_in_filename()
+        {
+            _movie.MovieMetadata.Value.ItemType = ItemType.Movie;
+            _movie.MovieMetadata.Value.Code = "H113SL-013AI";
+            _namingConfig.StandardMovieFormat = "{Movie Code} - {Movie Title} {[Quality Title]}";
+            Subject.BuildFileName(_movie, _movieFile).Should().Be("H113SL-013AI - South Park [HDTV-720p]");
+        }
+
         private void GivenReal()
         {
             _movieFile.Quality.Revision.Real = 1;

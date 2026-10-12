@@ -31,6 +31,14 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
         }
 
         [Test]
+        public void should_preserve_movie_product_code_in_folder_name()
+        {
+            _movie.MovieMetadata.Value.Code = "H113SL-013AI";
+            _namingConfig.MovieFolderFormat = "{Movie Code} - {Movie Title}";
+            Subject.GetMovieFolder(_movie).Should().Be("H113SL-013AI - Movie Title");
+        }
+
+        [Test]
         public void should_add_imdb_id()
         {
             _namingConfig.MovieFolderFormat = "{Movie Title} ({ImdbId})";
